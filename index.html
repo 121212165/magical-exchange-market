@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>在神奇的交易市场里 · 普通人唯一的路</title>
+<meta name="description" content="关于定投、过拟合、BOX、比特币、贝壳与共识租约的一次完整思考旅程">
+<style>
+  :root{
+    --bg:#05070f;
+    --bg2:#0a0f22;
+    --ink:#e8ecf8;
+    --ink-dim:#9aa4c0;
+    --ink-faint:#5c6580;
+    --gold:#f5c76a;
+    --gold2:#ffb84d;
+    --cyan:#55c8ff;
+    --violet:#a78bfa;
+    --green:#34d399;
+    --red:#fb7185;
+    --glass:rgba(255,255,255,0.045);
+    --glass-strong:rgba(255,255,255,0.08);
+    --line:rgba(255,255,255,0.09);
+    --radius:18px;
+    --font:'PingFang SC','HarmonyOS Sans SC','Microsoft YaHei',system-ui,-apple-system,sans-serif;
+    --mono:'SF Mono','JetBrains Mono','Cascadia Code',Consolas,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:var(--font);
+    background:
+      radial-gradient(1200px 800px at 80% -10%, rgba(167,139,250,0.10), transparent 60%),
+      radial-gradient(1000px 700px at -10% 20%, rgba(85,200,255,0.08), transparent 55%),
+      linear-gradient(180deg,var(--bg),var(--bg2) 60%,#070a14);
+    color:var(--ink);
+    min-height:100vh;
+    overflow-x:hidden;
+    line-height:1.7;
+  }
+  ::selection{background:rgba(245,199,106,.28);color:#fff}
+  a{color:var(--cyan);text-decoration:none}
+
+  /* ---------- 背景星尘 ---------- */
+  #stars{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+  }
+  #aurora{
+    position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+    background:
+      radial-gradient(700px 500px at 15% 20%, rgba(85,200,255,.10), transparent 60%),
+      radial-gradient(800px 600px at 85% 60%, rgba(245,199,106,.07), transparent 60%),
+      radial-gradient(600px 500px at 50% 90%, rgba(167,139,250,.09), transparent 60%);
+    animation:aurora 22s ease-in-out infinite alternate;
+  }
+  @keyframes aurora{
+    0%{opacity:.35;transform:translate(0,0) scale(1)}
+    50%{opacity:.6;transform:translate(-2%,1%) scale(1.05)}
+    100%{opacity:.4;transform:translate(2%,-1%) scale(1.02)}
+  }
+
+  .wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:0 24px}
+
+  /* ---------- 顶部导航 ---------- */
+  nav{
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    background:rgba(5,7,15,.72);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--line);
+  }
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:58px}
+  .logo{font-weight:700;letter-spacing:.4px;font-size:15px;display:flex;align-items:center;gap:9px}
+  .logo .dot{
+    width:9px;height:9px;border-radius:50%;
+    background:linear-gradient(135deg,var(--gold),var(--cyan));
+    box-shadow:0 0 12px rgba(245,199,106,.8);
+    animation:pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:.6}}
+  nav ul{display:flex;gap:4px;list-style:none;overflow-x:auto;scrollbar-width:none}
+  nav ul::-webkit-scrollbar{display:none}
+  nav a{
+    display:block;padding:7px 13px;border-radius:999px;font-size:13px;color:var(--ink-dim);
+    transition:.25s;white-space:nowrap;
+  }
+  nav a:hover{color:var(--ink);background:var(--glass-strong)}
+  nav a.on{color:var(--gold);background:rgba(245,199,106,.12)}
+
+  /* ---------- Hero ---------- */
+  .hero{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    text-align:center;position:relative;padding:110px 0 60px;
+  }
+  .hero .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:12.5px;letter-spacing:3px;color:var(--gold);
+    border:1px solid rgba(245,199,106,.35);border-radius:999px;
+    padding:7px 18px;margin-bottom:26px;
+    background:rgba(245,199,106,.07);
+  }
+  .hero .eyebrow::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold)}
+  .hero h1{
+    font-size:clamp(38px,7.4vw,76px);line-height:1.12;font-weight:800;
+    letter-spacing:1px;margin-bottom:22px;
+  }
+  .hero h1 .grad{
+    background:linear-gradient(100deg,var(--gold) 10%,var(--cyan) 55%,var(--violet) 90%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    background-size:200% 100%;animation:gradshift 7s ease-in-out infinite;
+  }
+  @keyframes gradshift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+  .hero .sub{
+    font-size:clamp(15px,2.4vw,19px);color:var(--ink-dim);max-width:640px;margin:0 auto 42px;
+  }
+  .hero .sub b{color:var(--ink)}
+  .hero .cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .btn{
+    display:inline-flex;align-items:center;gap:9px;
+    padding:13px 28px;border-radius:999px;font-size:14.5px;font-weight:600;
+    border:1px solid var(--line);color:var(--ink);cursor:pointer;transition:.28s;
+    background:var(--glass);backdrop-filter:blur(10px);
+  }
+  .btn:hover{transform:translateY(-2px);border-color:rgba(245,199,106,.5);box-shadow:0 8px 30px rgba(245,199,106,.15)}
+  .btn.gold{
+    background:linear-gradient(135deg,var(--gold),var(--gold2));color:#14100a;border:none;
+    box-shadow:0 6px 26px rgba(245,199,106,.35);
+  }
+  .btn.gold:hover{box-shadow:0 10px 36px rgba(245,199,106,.5)}
+  .hero .stats{
+    display:flex;gap:clamp(20px,5vw,60px);justify-content:center;margin-top:64px;flex-wrap:wrap;
+  }
+  .stat{text-align:center}
+  .stat .num{
+    font-family:var(--mono);font-size:clamp(24px,3.6vw,34px);font-weight:700;
+    background:linear-gradient(135deg,var(--cyan),var(--gold));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .stat .lab{font-size:12.5px;color:var(--ink-faint);margin-top:2px;letter-spacing:1px}
+  .scroll-hint{
+    position:absolute;bottom:26px;left:50%;transform:translateX(-50%);
+    color:var(--ink-faint);font-size:12px;letter-spacing:2px;display:flex;flex-direction:column;align-items:center;gap:7px;
+  }
+  .scroll-hint .wheel{width:22px;height:36px;border:1.5px solid var(--ink-faint);border-radius:12px;position:relative}
+  .scroll-hint .wheel::after{
+    content:'';position:absolute;top:6px;left:50%;width:3px;height:7px;margin-left:-1.5px;border-radius:2px;
+    background:var(--gold);animation:wheel 1.8s ease-in-out infinite;
+  }
+  @keyframes wheel{0%{transform:translateY(0);opacity:1}70%{transform:translateY(12px);opacity:0}100%{opacity:0}}
+
+  /* ---------- 章节 ---------- */
+  section{position:relative;padding:96px 0 40px}
+  .sec-head{margin-bottom:44px}
+  .sec-tag{
+    font-family:var(--mono);font-size:12px;letter-spacing:3px;color:var(--cyan);
+    display:flex;align-items:center;gap:12px;margin-bottom:14px;
+  }
+  .sec-tag::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+  .sec-head h2{
+    font-size:clamp(26px,4.6vw,42px);font-weight:800;letter-spacing:.5px;line-height:1.25;
+  }
+  .sec-head h2 .grad{
+    background:linear-gradient(120deg,var(--gold),var(--cyan));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .sec-head p{color:var(--ink-dim);max-width:720px;margin-top:12px;font-size:15.5px}
+
+  /* 玻璃卡片 */
+  .glass{
+    background:var(--glass);border:1px solid var(--line);border-radius:var(--radius);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    padding:26px 28px;transition:.35s;
+  }
+  .glass:hover{border-color:rgba(255,255,255,.18);transform:translateY(-2px)}
+  .grid{display:grid;gap:18px}
+  .g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .g4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+
+  .card-ico{
+    width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    font-size:20px;margin-bottom:14px;
+    background:linear-gradient(135deg,rgba(245,199,106,.16),rgba(85,200,255,.14));
+    border:1px solid rgba(255,255,255,.1);
+  }
+  .card-t{font-weight:700;font-size:16.5px;margin-bottom:8px}
+  .card-d{font-size:13.8px;color:var(--ink-dim)}
+  .card-d b, .card-d strong{color:var(--ink)}
+
+  /* 引用块 */
+  .quote{
+    position:relative;padding:30px 32px 30px 56px;margin:26px 0;
+    border-radius:var(--radius);background:linear-gradient(135deg,rgba(245,199,106,.09),rgba(85,200,255,.06));
+    border:1px solid rgba(245,199,106,.25);
+  }
+  .quote::before{
+    content:'“';position:absolute;left:20px;top:6px;font-size:58px;color:var(--gold);opacity:.7;font-family:Georgia,serif;
+  }
+  .quote p{font-size:17px;line-height:1.8}
+  .quote .src{display:block;margin-top:10px;font-size:12.5px;color:var(--ink-faint)}
+
+  /* ---------- 交互 ---------- */
+  .seg{display:inline-flex;background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:4px;gap:4px;flex-wrap:wrap}
+  .seg button{
+    border:none;background:transparent;color:var(--ink-dim);font-size:13px;padding:8px 18px;
+    border-radius:999px;cursor:pointer;transition:.25s;font-family:var(--font);font-weight:500;
+  }
+  .seg button.on{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#14100a;font-weight:700}
+  .seg button.small{padding:6px 13px;font-size:12.5px}
+
+  .tbl{width:100%;border-collapse:collapse;font-size:13.8px}
+  .tbl th{color:var(--ink-faint);font-weight:600;text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);font-size:12px;letter-spacing:1px}
+  .tbl td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:top}
+  .tbl tr:last-child td{border-bottom:none}
+  .tbl .up{color:var(--green);font-family:var(--mono);font-weight:600}
+  .tbl .down{color:var(--red);font-family:var(--mono);font-weight:600}
+  .tbl .k{color:var(--gold);font-family:var(--mono);font-weight:600}
+
+  .pill{display:inline-block;font-size:11.5px;padding:3px 11px;border-radius:999px;margin-right:6px;margin-bottom:6px;border:1px solid var(--line);color:var(--ink-dim)}
+
+  /* 图表容器 */
+  .chart{border-radius:var(--radius);border:1px solid var(--line);background:rgba(0,0,0,.22);padding:20px;overflow:hidden}
+  .chart svg{width:100%;height:auto;display:block}
+
+  /* 时间线 */
+  .timeline{position:relative;padding-left:30px}
+  .timeline::before{content:'';position:absolute;left:9px;top:8px;bottom:8px;width:2px;background:linear-gradient(180deg,var(--gold),var(--cyan),var(--violet),transparent)}
+  .tl-item{position:relative;margin-bottom:26px}
+  .tl-item::before{
+    content:'';position:absolute;left:-30px;top:7px;width:12px;height:12px;border-radius:50%;
+    background:var(--bg);border:2.5px solid var(--gold);
+  }
+  .tl-item.danger::before{border-color:var(--red)}
+  .tl-item.info::before{border-color:var(--cyan)}
+  .tl-year{font-family:var(--mono);font-size:12.5px;color:var(--gold);letter-spacing:1px}
+  .tl-t{font-weight:700;font-size:15.5px;margin:2px 0 5px}
+  .tl-d{font-size:13.5px;color:var(--ink-dim)}
+
+  /* 大数字 */
+  .big-num{
+    font-family:var(--mono);font-weight:800;
+    background:linear-gradient(135deg,var(--gold),var(--cyan));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+
+  /* 提示框 */
+  .note{
+    border-left:3px solid var(--gold);background:rgba(245,199,106,.07);
+    padding:14px 18px;border-radius:0 12px 12px 0;font-size:13.5px;color:var(--ink-dim);margin-top:18px;
+  }
+  .note.red{border-left-color:var(--red);background:rgba(251,113,133,.07)}
+  .note.cyan{border-left-color:var(--cyan);background:rgba(85,200,255,.07)}
+
+  .reveal{opacity:0;transform:translateY(30px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+  .d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}.d4{transition-delay:.32s}
+
+  .divider{
+    height:1px;margin:20px 0;background:linear-gradient(90deg,transparent,var(--line),transparent);
+  }
+
+  /* footer */
+  footer{
+    position:relative;z-index:1;border-top:1px solid var(--line);margin-top:90px;
+    padding:44px 0 60px;text-align:center;color:var(--ink-faint);font-size:13px;
+  }
+  footer .mark{color:var(--gold);font-weight:700}
+
+  .slider-row{display:flex;align-items:center;gap:14px;margin:10px 0}
+  .slider-row label{font-size:13.5px;color:var(--ink-dim);min-width:110px}
+  .slider-row input[type=range]{flex:1;accent-color:var(--gold);height:4px;cursor:pointer}
+  .slider-row output{font-family:var(--mono);color:var(--gold);font-size:14px;min-width:86px;text-align:right}
+
+  @media (max-width:720px){
+    section{padding:70px 0 20px}
+    nav ul a{font-size:12px;padding:6px 10px}
+    .glass{padding:20px 18px}
+  }
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<div id="aurora"></div>
+
+<nav>
+  <div class="wrap">
+    <div class="logo"><span class="dot"></span>神奇的交易市场</div>
+    <ul>
+      <li><a href="#premise">前提</a></li>
+      <li><a href="#overfit">过拟合</a></li>
+      <li><a href="#sim">定投模拟</a></li>
+      <li><a href="#box">BOX 回测</a></li>
+      <li><a href="#btc">比特币</a></li>
+      <li><a href="#shell">贝壳</a></li>
+      <li><a href="#lease">共识租约</a></li>
+      <li><a href="#final">结论</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">一次关于投资底层逻辑的完整思考</div>
+    <h1>
+      在<span class="grad">神奇的交易市场</span>里<br>
+      普通人唯一正确的路
+    </h1>
+    <p class="sub">
+      这里不存在"又聪明又幸运"的捷径 —— 只有一条路,
+      几乎所有人都知道,<b>几乎没有人做到</b>:
+      <b style="color:var(--gold)">自动投资(定投)</b>。
+    </p>
+    <div class="cta-row">
+      <a class="btn gold" href="#premise">开始这场思考 ↓</a>
+      <a class="btn" href="#box">先看七年回测数据</a>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="num">2100万</div><div class="lab">比特币总量上限</div></div>
+      <div class="stat"><div class="num">+217.8%</div><div class="lab">BOX 七年定投收益</div></div>
+      <div class="stat"><div class="num">2140</div><div class="lab">比特币挖完之年</div></div>
+      <div class="stat"><div class="num">92.8%</div><div class="lab">BOX 收益由 BTC 贡献</div></div>
+    </div>
+  </div>
+  <div class="scroll-hint"><div class="wheel"></div>向下滚动</div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ 0. 题眼 ============ -->
+  <section id="premise">
+    <div class="sec-head reveal">
+      <div class="sec-tag">00 · 题眼</div>
+      <h2>一句话记住这个市场</h2>
+    </div>
+    <div class="quote reveal d1">
+      <p>在神奇的交易市场里,普通人唯一正确的投资方式,是<b style="color:var(--gold)">自动投资</b>——定投。</p>
+      <span class="src">—— 这句话,是下面所有论证要证明的结论</span>
+    </div>
+    <div class="grid g2" style="margin-top:26px">
+      <div class="glass reveal d2">
+        <div class="card-ico">🌌</div>
+        <div class="card-t">它为什么神奇</div>
+        <div class="card-d">
+          全世界只有这一个地方,<b>门槛为零、正和游戏、主动失效、时间作朋友</b>。
+          别的路都要求你先拥有资金、资源、专业、容错率 —— 只有市场,10 块钱就能入场,
+          长期跟着人类进步走,"什么都不做"反而成了最优策略。
+        </div>
+      </div>
+      <div class="glass reveal d3">
+        <div class="card-ico">🧭</div>
+        <div class="card-t">为什么只有一条路</div>
+        <div class="card-d">
+          所有需要"判断"的玩法(炒股、波段、抄底、听消息),都要靠普通人恰好没有的四样东西:
+          <b>信息、资金、心理、专业</b>。逐一排除后,只剩定投 ——
+          <b>用纪律代替判断</b>。
+        </div>
+      </div>
+    </div>
+    <div class="quote reveal d4" style="margin-top:26px">
+      <p>定投的本质:用<b style="color:var(--cyan)">线性的劳动</b>(工资),持续供养<b style="color:var(--gold)">复利的资产</b>(定投),强制自己从劳动曲线,换到资本曲线上。</p>
+      <span class="src">改变不了 r &gt; g,但可以选择站到哪条曲线上</span>
+    </div>
+  </section>
+
+  <!-- ============ 1. 前提 ============ -->
+  <section id="layer1">
+    <div class="sec-head reveal">
+      <div class="sec-tag">01 · 前提</div>
+      <h2>一切建立在一条规律上</h2>
+      <p>定投成立的前提,是你首先相信:<b>人类的金融,会一直进步。</b> 但这条规律藏了三层,一层比一层脆 —— 你必须看清每一层。</p>
+    </div>
+    <div class="grid g3">
+      <div class="glass reveal d1">
+        <div class="card-ico">🧬</div>
+        <div class="card-t">人类长期进步</div>
+        <div class="card-d">创新、教育、制度、生产力 —— 统计上几乎必然。</div>
+      </div>
+      <div class="glass reveal d2">
+        <div class="card-ico">📈</div>
+        <div class="card-t">经济长期增长</div>
+        <div class="card-d">有损耗:战争、危机、政策失误,但趋势仍在。</div>
+      </div>
+      <div class="glass reveal d3">
+        <div class="card-ico">🎯</div>
+        <div class="card-t">资产长期向上</div>
+        <div class="card-d">关键一步:<b>买"人类整体"</b>(指数/顶级资产),而不是随便什么标的。单一公司会死,单一国家可以 30 年不创新高。</div>
+      </div>
+    </div>
+    <div class="quote reveal d4" style="margin-top:26px">
+      <p>方向确定(长期向上),<b style="color:var(--cyan)">路径随机</b>(哪天是底、哪天是顶,没人知道)。
+      <b style="color:var(--gold)">定投就是把"赌路径"换成"赌方向"。</b></p>
+      <span class="src">用确定的时间,换不确定的空间 —— 李笑来:定投 = 用时间换空间</span>
+    </div>
+    <div class="grid g3" style="margin-top:24px">
+      <div class="glass reveal d1">
+        <div class="card-t" style="font-size:14px">低买高卖 / 择时</div>
+        <div class="card-d">需要知道路径(哪天是底)<br><span class="big-num" style="font-size:22px">不可能</span></div>
+      </div>
+      <div class="glass reveal d2">
+        <div class="card-t" style="font-size:14px">一把梭哈长期持有</div>
+        <div class="card-d">知道方向 + 扛得住波动<br><span class="big-num" style="font-size:22px">心理太难</span></div>
+      </div>
+      <div class="glass reveal d3" style="border-color:rgba(245,199,106,.4);box-shadow:0 0 30px rgba(245,199,106,.08)">
+        <div class="card-t" style="font-size:14px;color:var(--gold)">定投 ✅</div>
+        <div class="card-d">只知道方向,不用知道路径<br><span class="big-num" style="font-size:22px">唯一匹配</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2. 过拟合 ============ -->
+  <section id="overfit">
+    <div class="sec-head reveal">
+      <div class="sec-tag">02 · 保持清醒</div>
+      <h2>那个 +74% 的例子,<span class="grad">过度神话了</span></h2>
+      <p>《定投改变命运》里有一个经典例子:2018-12 从 $23 开始,每月 $1,000 定投 11 个月,均价 $54,期末价 $85,收益 <b>+74.01%</b>。数学没错 —— 但区间是<b>事后挑的</b>。切换看看同一机制在另一个区间的真相。</p>
+    </div>
+
+    <div class="glass reveal d1" style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div style="font-weight:700;font-size:16px">同一个定投机制,两个不同的世界</div>
+        <div class="seg" id="overfitSeg">
+          <button class="on" data-v="good">区间 A · 完美(书里)</button>
+          <button data-v="bad">区间 B · 阴跌(反着来)</button>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div id="overfitChart" class="chart" style="background:transparent;border:none;padding:0"></div>
+      <div class="grid g4" style="margin-top:16px">
+        <div class="glass" style="padding:14px"><div style="font-size:12px;color:var(--ink-faint)">均价</div><div id="ov-price" class="big-num" style="font-size:24px">$54</div></div>
+        <div class="glass" style="padding:14px"><div style="font-size:12px;color:var(--ink-faint)">期末价</div><div id="ov-end" class="big-num" style="font-size:24px">$85</div></div>
+        <div class="glass" style="padding:14px"><div style="font-size:12px;color:var(--ink-faint)">投入</div><div id="ov-inv" style="font-size:24px;font-family:var(--mono);color:var(--ink)">$11,000</div></div>
+        <div class="glass" style="padding:14px"><div style="font-size:12px;color:var(--ink-faint)">收益率</div><div id="ov-ret" style="font-size:26px;font-family:var(--mono);color:var(--green)">+74.01%</div></div>
+      </div>
+    </div>
+
+    <div class="grid g3">
+      <div class="glass reveal d2">
+        <div class="card-t" style="font-size:15px">① 区间选择偏差</div>
+        <div class="card-d">起点在最低点、终点在最高点。<b>真实世界里你永远不知道自己站在哪</b> —— 2018 年 12 月你以为那是底,也可能是半山腰。</div>
+      </div>
+      <div class="glass reveal d3">
+        <div class="card-t" style="font-size:15px">② 单一资产偏差</div>
+        <div class="card-d">这是事后涨最多的那个资产。同期定投 ETH、EOS 或 A 股,结果天差地别。<b>"早就选对了标的"恰恰是普通人最没把握的一步</b>。</div>
+      </div>
+      <div class="glass reveal d4">
+        <div class="card-t" style="font-size:15px">③ 幸存者偏差</div>
+        <div class="card-d">书里展示的是微笑曲线最标准的一次。<b>而同期定投归零币的人,微笑曲线画成了直线下落</b> —— 这个例子永远不会讲。</div>
+      </div>
+    </div>
+
+    <div class="note cyan reveal d1">
+      <b>拆掉神话之后,机制里依然有真东西:</b> 定投不承诺收益,它承诺<b>减少错误的概率</b>(摊平成本,不用赌底);
+      它的有效区间不是 11 个月,而是<b>跨越完整牛熊(一个周期以上)</b>;它真正的对手不是市场,是<b>你自己</b>——追涨杀跌、拿不住、中途用钱。
+    </div>
+  </section>
+
+  <!-- ============ 3. 定投模拟器 ============ -->
+  <section id="sim">
+    <div class="sec-head reveal">
+      <div class="sec-tag">03 · 亲手算</div>
+      <h2>定投模拟器 · <span class="grad">动手看看复利</span></h2>
+      <p>拖动三个滑块,看看"每月定投 vs 一次性投入"在长期下的差距。注意那条曲线:前几年最煎熬,过了拐点,时间开始替你打工。</p>
+    </div>
+    <div class="glass reveal d1">
+      <div class="grid g2" style="align-items:center">
+        <div>
+          <div class="slider-row"><label>每月投入</label><input type="range" id="sAmt" min="100" max="20000" step="100" value="3000"><output id="oAmt">¥3,000</output></div>
+          <div class="slider-row"><label>持续年数</label><input type="range" id="sYr" min="1" max="30" step="1" value="10"><output id="oYr">10 年</output></div>
+          <div class="slider-row"><label>年化收益</label><input type="range" id="sR" min="2" max="25" step="0.5" value="10"><output id="oR">10%</output></div>
+          <div class="slider-row"><label>晚几年才开始</label><input type="range" id="sD" min="0" max="15" step="1" value="5"><output id="oD">5 年</output></div>
+        </div>
+        <div class="grid g2" style="gap:10px">
+          <div class="glass" style="padding:14px;text-align:center"><div style="font-size:12px;color:var(--ink-faint)">累计投入</div><div id="simInv" class="big-num" style="font-size:26px">¥360,000</div></div>
+          <div class="glass" style="padding:14px;text-align:center;border-color:rgba(245,199,106,.4)"><div style="font-size:12px;color:var(--ink-faint)">现在就开始</div><div id="simDca" style="font-size:26px;font-family:var(--mono);color:var(--gold)">—</div></div>
+          <div class="glass" style="padding:14px;text-align:center"><div style="font-size:12px;color:var(--ink-faint)"><span id="simDLab">晚 5 年开始</span></div><div id="simLump" style="font-size:26px;font-family:var(--mono);color:var(--cyan)">—</div></div>
+          <div class="glass" style="padding:14px;text-align:center"><div style="font-size:12px;color:var(--ink-faint)">差距(早开始的奖励)</div><div id="simEdge" style="font-size:26px;font-family:var(--mono);color:var(--green)">—</div></div>
+        </div>
+      </div>
+      <div id="simChart" class="chart" style="margin-top:18px;background:rgba(0,0,0,.25)"></div>
+      <div class="note">
+        <b>怎么读:</b> 两条曲线每月投入完全相同,唯一区别是<b>早开始 vs 晚开始</b>。
+        定投最贵的东西不是本金,是<b>时间</b>:晚开始的人,前面的月份只能"攒着"等钱到位,白白错过复利。
+        复利前几年几乎看不见,过了拐点才开始加速 —— 所以定投的第一原则是<b>不要等"准备好了再开始",现在就买第一笔</b>。
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4. BOX 回测 ============ -->
+  <section id="box">
+    <div class="sec-head reveal">
+      <div class="sec-tag">04 · 七年实证</div>
+      <h2>BOX · 第一个区块链 ETF 的<span class="grad">七年答卷</span></h2>
+      <p>BOX 于 <b>2019-07-03</b> 成立(所谓的"七三韭菜节"),当年数据太短,不能当模型例子 —— 现在 7 年过去了,用真实月度价格回测:每月 $1,000 × 66 个月,总投入 $66,000。官方权重 <b>65% BTC / 25% EOS / 10% XIN</b>。切换情景看结果。</p>
+    </div>
+
+    <div class="glass reveal d1">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div style="font-weight:700;font-size:16px">66 个月,每月 $1,000</div>
+        <div class="seg" id="boxSeg">
+          <button class="on" data-v="box">官方 BOX 65/25/10</button>
+          <button data-v="btc">全 BTC</button>
+          <button data-v="eos">全 EOS</button>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div id="boxChart" class="chart" style="background:transparent;border:none;padding:0"></div>
+      <div class="grid g4" style="margin-top:16px">
+        <div class="glass" style="padding:14px"><div style="font-size:12px;color:var(--ink-faint)">投入</div><div id="bx-inv" style="font-size:22px;font-family:var(--mono)">$66,000</div></div>
+        <div class="glass" style="padding:14px"><div style="font-size:12px;color:var(--ink-faint)">期末市值</div><div id="bx-mv" class="big-num" style="font-size:24px">—</div></div>
+        <div class="glass" style="padding:14px"><div style="font-size:12px;color:var(--ink-faint)">收益率</div><div id="bx-ret" style="font-size:26px;font-family:var(--mono);color:var(--green)">—</div></div>
+        <div class="glass" style="padding:14px"><div style="font-size:12px;color:var(--ink-faint)">2022-11 FTX谷底时</div><div id="bx-low" style="font-size:20px;font-family:var(--mono);color:var(--cyan)">—</div></div>
+      </div>
+      <div id="boxContrib" style="margin-top:16px"></div>
+    </div>
+
+    <div class="grid g3" style="margin-top:20px">
+      <div class="glass reveal d2">
+        <div class="card-t" style="font-size:15px">✅ 前提被验证(仅对顶级资产)</div>
+        <div class="card-d">七年定投 BTC 大赚 —— "人类长期进步"这条规律,在 2019 年选 BTC 这件事上兑现了。</div>
+      </div>
+      <div class="glass reveal d3">
+        <div class="card-t" style="font-size:15px;color:var(--red)">❌ "单点会死"被实证</div>
+        <div class="card-d">同一套机制定投 EOS = <b style="color:var(--red)">−48.9%</b>。定投救不了方向错误的标的 —— 马克斯的警告七年应验。</div>
+      </div>
+      <div class="glass reveal d4">
+        <div class="card-t" style="font-size:15px;color:var(--gold)">🏆 BOX 过关靠的是 70% 的 BTC</div>
+        <div class="card-d">BOX = 用 65% BTC 的正确,稀释 35% EOS/XIN 的灾难。<b>这是 2019 年定下的结构,不是事后挑的</b>。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5. 比特币 ============ -->
+  <section id="btc">
+    <div class="sec-head reveal">
+      <div class="sec-tag">05 · 为什么是比特币</div>
+      <h2>比特币被看好的<span class="grad">四个支柱</span></h2>
+      <p>BOX 敢把 65% 的重量压给 BTC,因为定投的前提是"标的不归零"——加密世界里,只有 BTC 同时满足这四条。</p>
+    </div>
+    <div class="grid g2">
+      <div class="glass reveal d1">
+        <div class="card-ico">🔒</div>
+        <div class="card-t">数学保证的绝对稀缺</div>
+        <div class="card-d">总量恒为 2100 万,每 4 年产量减半。黄金可能发现新矿,法币可以无限印,<b>比特币的稀缺是代码写死的</b>。</div>
+      </div>
+      <div class="glass reveal d2">
+        <div class="card-ico">🌐</div>
+        <div class="card-t">无主人 · 抗审查 · 抗没收</div>
+        <div class="card-d">没有发行方、没有总部、没有可关闭的服务器。<b>无人能冻结你</b> —— 资产属性上它是唯一"不依赖任何主体信用"的存在。</div>
+      </div>
+      <div class="glass reveal d3">
+        <div class="card-ico">🛡️</div>
+        <div class="card-t">15 年零宕机 · 最不容易死</div>
+        <div class="card-d">运行 15 年从未被攻破,算力全球最高。所有山寨币都会死,<b>BTC 是"最接近不会死"的标的</b>。</div>
+      </div>
+      <div class="glass reveal d4">
+        <div class="card-ico">👑</div>
+        <div class="card-t">叙事升级:从支付工具 → 数字黄金</div>
+        <div class="card-d">ETF 上市、主权国家讨论储备、机构入场 —— <b>"共识即价值"自我强化</b>:持有者不卖 → 流通更稀缺 → 更被看好。</div>
+      </div>
+    </div>
+
+    <div class="glass reveal d1" style="margin-top:26px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div style="font-weight:700;font-size:16px">发行曲线 · 2140 年挖完</div>
+        <div class="seg"><button class="on small">不是预测,是演算</button></div>
+      </div>
+      <div class="divider"></div>
+      <div id="btcChart" class="chart" style="background:transparent;border:none;padding:0"></div>
+      <div class="grid g4" style="margin-top:14px">
+        <div class="glass" style="padding:12px;text-align:center"><div style="font-size:12px;color:var(--ink-faint)">2012 · 第一次减半</div><div class="big-num" style="font-size:20px">已挖 50%</div></div>
+        <div class="glass" style="padding:12px;text-align:center"><div style="font-size:12px;color:var(--ink-faint)">~2035</div><div class="big-num" style="font-size:20px">已挖 ~99%</div></div>
+        <div class="glass" style="padding:12px;text-align:center"><div style="font-size:12px;color:var(--ink-faint)">~2140</div><div class="big-num" style="font-size:20px">100% 挖完</div></div>
+        <div class="glass" style="padding:12px;text-align:center"><div style="font-size:12px;color:var(--ink-faint)">挖完后</div><div style="font-size:16px;color:var(--ink)">靠手续费维持,不会停摆</div></div>
+      </div>
+      <div class="note cyan" style="margin-top:14px">
+        <b>但供给可预测 ≠ 价格可预测。</b> 我们算得准"哪年挖完",因为供给端是数学;价格由需求端决定,而需求不可预测。
+        所以它依然需要"信仰"——只是这份信仰的地基,是全世界唯一一个能提前 100 年精确演算的稀缺。
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 6. 贝壳 ============ -->
+  <section id="shell">
+    <div class="sec-head reveal">
+      <div class="sec-tag">06 · 历史镜像</div>
+      <h2>贝壳 · 人类第一个"玩到千年的<span class="grad">过家家</span>"</h2>
+      <p>汉字里所有带"贝"字旁的字 —— 财、货、贵、贱、買、賣 —— 都是贝壳当过货币留下的化石。它玩了一千年,然后被淘汰了。它的死法,是货币如何死亡的标准标本。</p>
+    </div>
+    <div class="glass reveal d1">
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-year">商代 · 前13世纪</div>
+          <div class="tl-t">贝币正式成为货币</div>
+          <div class="tl-d">中国最早的货币形态,单位叫"朋"(约 10 枚)。商王赏赐臣子,最常见的就是"赐贝若干朋"。</div>
+        </div>
+        <div class="tl-item info">
+          <div class="tl-year">商末西周 · 前11世纪</div>
+          <div class="tl-t">第一代"假币":铜仿贝</div>
+          <div class="tl-d">天然贝壳不够用了,拿青铜铸成贝壳形状 —— 天然贝的稀缺溢价,开始被仿制稀释。</div>
+        </div>
+        <div class="tl-item info">
+          <div class="tl-year">春秋战国 · 前5-3世纪</div>
+          <div class="tl-t">金属铸币全面兴起</div>
+          <div class="tl-d">布币、刀币、蚁鼻钱、圜钱……各国各玩各的货币游戏,贝币退居二线。</div>
+        </div>
+        <div class="tl-item danger">
+          <div class="tl-year">前221年 · 秦统一</div>
+          <div class="tl-t">贝壳被国家正式"判死刑"</div>
+          <div class="tl-d">全国通行"半两钱"。《汉书·食货志》: "<b>珠玉龟贝银锡之属为器饰宝藏,不为币</b>" —— 贝壳被官方降级为装饰品和收藏品,不再是钱。</div>
+        </div>
+        <div class="tl-item danger">
+          <div class="tl-year">此后两千年</div>
+          <div class="tl-t">沦为装饰、殉葬、儿童游戏</div>
+          <div class="tl-d">方孔圆钱一直用到清末,而"贝"字永远留在了汉字里。</div>
+        </div>
+      </div>
+    </div>
+    <div class="grid g3" style="margin-top:20px">
+      <div class="glass reveal d2">
+        <div class="card-t" style="font-size:15px">经济层 · 供应见顶</div>
+        <div class="card-d">交易规模一大,贝壳供应立刻见顶 —— 不可铸造、不可精确分割、供应不受人控制。</div>
+      </div>
+      <div class="glass reveal d3">
+        <div class="card-t" style="font-size:15px">技术层 · 降维打击</div>
+        <div class="card-d">金属铸币在标准化、分割、价值密度上全面碾压。贝壳被替代,像算盘被计算机替代。</div>
+      </div>
+      <div class="glass reveal d4" style="border-color:rgba(251,113,133,.35)">
+        <div class="card-t" style="font-size:15px;color:var(--red)">政治层 · 国家换规则</div>
+        <div class="card-d">贝壳不是被"市场"淘汰的,是<b>被税收系统淘汰的</b>:秦统一货币,国家只收自己铸的钱。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 7. 共识租约 ============ -->
+  <section id="lease">
+    <div class="sec-head reveal">
+      <div class="sec-tag">07 · 最深一层</div>
+      <h2>一切价值,都是<span class="grad">租来的</span></h2>
+      <p>价值 = 共识 × 时长 × 玩家数。没有任何东西"本来就值钱"。贝壳续租 1000 年,黄金续租 5000 年,美元续租 80 年,比特币才续租 15 年 —— 都在续,关键看租约条款。</p>
+    </div>
+    <div class="grid g2">
+      <div class="glass reveal d1">
+        <div class="card-t">钱不是"东西",是"账本"</div>
+        <div class="card-d">货币的本质是全社会共享的一本"谁欠谁"的账。贝壳只是载体。载体会死,账本不会 —— <b>永远不要爱上一个载体,要爱上记账这件事本身</b>。</div>
+      </div>
+      <div class="glass reveal d2">
+        <div class="card-t">终极裁判:国家收什么税</div>
+        <div class="card-d">货币的终极之锚,是"国家收税时认什么"。贝壳进不了税收系统,就进不了主经济。<b>它想当"钱",结果被税收碾压;比特币不想当"钱",它想当"资产"</b> —— 资产不需要税收背书。</div>
+      </div>
+      <div class="glass reveal d3">
+        <div class="card-t">决定租约续多久的三件事</div>
+        <div class="card-d" style="margin-top:6px">
+          <span class="pill">替代品的成本</span><span class="pill">有没有守护者</span><span class="pill">规则能不能进化</span><br>
+          <span style="color:var(--ink-faint)">贝壳死于"三无":无壁垒、无守护、无进化。比特币恰好三条都补上了。</span>
+        </div>
+      </div>
+      <div class="glass reveal d4">
+        <div class="card-t">过家家的真相</div>
+        <div class="card-d">"过家家是假的,是因为玩的人太少;当几亿人、几代人接着玩,它就成了最硬的真。" <b>看破是智慧,看破之后选择在场,才是格局</b>。</div>
+      </div>
+    </div>
+    <div class="quote reveal d1" style="margin-top:26px">
+      <p>贝壳倒下了,但汉字里的"贝"字旁还在提醒我们:它曾是最硬的共识 —— <b style="color:var(--gold)">直到更强的东西出现</b>。</p>
+    </div>
+  </section>
+
+  <!-- ============ 8. 结论 ============ -->
+  <section id="final">
+    <div class="sec-head reveal">
+      <div class="sec-tag">08 · 结论</div>
+      <h2>不要不参与,做一个<span class="grad">永久中立的参与者</span></h2>
+    </div>
+    <div class="grid g3">
+      <div class="glass reveal d1">
+        <div class="card-t" style="color:var(--gold)">行动 · 参与</div>
+        <div class="card-d">每月真金白银买入,保证自己在场。<b>光"中立"不买,是观望</b> —— 现金是负复利,不参与就是被通胀收税。</div>
+      </div>
+      <div class="glass reveal d2">
+        <div class="card-t" style="color:var(--cyan)">态度 · 中立</div>
+        <div class="card-d">对涨跌无感:跌了是打折,涨了是正常。<b>中立的是时机和情绪,不是方向</b> —— 方向上永远做多人类进步。</div>
+      </div>
+      <div class="glass reveal d3">
+        <div class="card-t" style="color:var(--violet)">制度 · 永久</div>
+        <div class="card-d">把"每月买"写成自动执行,不靠意志。<b>意志会崩,制度不会</b> —— 这就是"独立感受"的机制:情绪从价格上卸载,挂到方向上。</div>
+      </div>
+    </div>
+
+    <div class="quote reveal d1" style="margin-top:26px">
+      <p>错误可以发生,但<b style="color:var(--gold)">不能让你出局</b>。定投 = 错误杀不死参与(给没能力处理错误的人);
+      大师 = 错误滋养参与(给有能力处理错误的人);失败 = 错误终止参与。
+      <b>永远参与,以错误无法终止的姿态参与。</b></p>
+    </div>
+
+    <div class="glass reveal d2" style="margin-top:26px;border-color:rgba(245,199,106,.35)">
+      <div style="font-weight:800;font-size:18px;margin-bottom:14px;text-align:center">✨ 一句话收束这场思考</div>
+      <p style="text-align:center;font-size:16.5px;color:var(--ink-dim)">
+        在神奇的交易市场里,普通人唯一正确的投资方式是<b style="color:var(--gold)">自动投资</b>。
+        因为 <b style="color:var(--cyan)">方向确定</b>、<b style="color:var(--red)">路径随机</b>、<b style="color:var(--violet)">聪明是负债</b>、<b style="color:var(--green)">纪律是资产</b>。
+        看破它是过家家,然后 <b style="color:var(--gold)">认真、中立、长期地玩下去</b>。
+      </p>
+      <div style="text-align:center;margin-top:18px">
+        <span class="pill" style="color:var(--gold);border-color:rgba(245,199,106,.4)">定投</span>
+        <span class="pill" style="color:var(--cyan);border-color:rgba(85,200,255,.4)">七年</span>
+        <span class="pill" style="color:var(--green);border-color:rgba(52,211,153,.4)">在场</span>
+        <span class="pill" style="color:var(--violet);border-color:rgba(167,139,250,.4)">共识租约</span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="mark">在神奇的交易市场里 · 普通人唯一正确的路</div>
+    <p style="margin-top:8px">一次关于定投、过拟合、BOX 回测、比特币、贝壳与共识租约的完整思考 · 数据:公开历史月线回测,示意与教育用途,不构成投资建议</p>
+  </div>
+</footer>
+
+<script>
+/* ============ 背景星尘 ============ */
+(function(){
+  const cv=document.getElementById('stars'),ctx=cv.getContext('2d');
+  let W,H,pts=[];
+  function size(){W=cv.width=innerWidth;H=cv.height=innerHeight;resize()}
+  function resize(){
+    pts=[];
+    const n=Math.min(160,Math.floor(innerWidth*innerHeight/9000));
+    for(let i=0;i<n;i++)pts.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.3+.3,a:Math.random()*Math.PI*2,s:Math.random()*.35+.1});
+  }
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    for(const p of pts){
+      p.a+=0.004;
+      p.x+=Math.cos(p.a)*p.s*.25;p.y+=Math.sin(p.a)*p.s*.25;
+      if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+      const tw=.4+Math.sin(Date.now()/1000+p.r*10)*.3;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fillStyle=`rgba(200,220,255,${tw*.5})`;ctx.fill();
+    }
+    requestAnimationFrame(tick);
+  }
+  addEventListener('resize',size);size();tick();
+})();
+
+/* ============ 滚动渐入 + 导航高亮 ============ */
+(function(){
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  const links=[...document.querySelectorAll('nav a')],secs=links.map(a=>document.querySelector(a.getAttribute('href')));
+  const io2=new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      if(e.isIntersecting){
+        const id='#'+e.target.id;
+        links.forEach(a=>a.classList.toggle('on',a.getAttribute('href')===id));
+      }
+    });
+  },{threshold:.5});
+  secs.forEach(s=>io2.observe(s));
+})();
+
+/* ============ SVG 图表工具 ============ */
+function pathFrom(points,w,h,pad){ // points: [[x,y]...] normalized 0-1
+  if(points.length<2)return '';
+  const sx=v=>pad+v*(w-2*pad), sy=v=>h-pad-v*(h-2*pad);
+  let d=`M${sx(points[0][0]).toFixed(1)},${sy(points[0][1]).toFixed(1)}`;
+  for(let i=1;i<points.length;i++)d+=` L${sx(points[i][0]).toFixed(1)},${sy(points[i][1]).toFixed(1)}`;
+  return d;
+}
+function axesSVG(w,h,xlab,ylab){
+  let g=`<line x1="50" y1="${h-40}" x2="${w-20}" y2="${h-40}" stroke="rgba(255,255,255,.15)" stroke-width="1"/>`;
+  g+=`<line x1="50" y1="14" x2="50" y2="${h-40}" stroke="rgba(255,255,255,.15)" stroke-width="1"/>`;
+  for(let i=0;i<4;i++){
+    const y=14+(h-40-14)*i/4;
+    g+=`<line x1="50" y1="${y.toFixed(0)}" x2="${w-20}" y2="${y.toFixed(0)}" stroke="rgba(255,255,255,.05)"/>`;
+  }
+  xlab.forEach((t,i)=>{const x=50+(w-20-50)*i/(xlab.length-1);g+=`<text x="${x.toFixed(0)}" y="${h-18}" fill="rgba(255,255,255,.45)" font-size="11" text-anchor="middle" font-family="var(--mono)">${t}</text>`});
+  g+=`<text x="16" y="20" fill="rgba(255,255,255,.4)" font-size="11" font-family="var(--mono)">${ylab}</text>`;
+  return g;
+}
+function areaPath(points,w,h,pad,color){
+  if(points.length<2)return '';
+  const sx=v=>pad+v*(w-2*pad), sy=v=>h-pad-v*(h-2*pad);
+  let d=`M${sx(points[0][0]).toFixed(1)},${sy(points[0][1]).toFixed(1)}`;
+  for(let i=1;i<points.length;i++)d+=` L${sx(points[i][0]).toFixed(1)},${sy(points[i][1]).toFixed(1)}`;
+  d+=` L${sx(points[points.length-1][0]).toFixed(1)},${(h-pad).toFixed(1)} L${sx(points[0][0]).toFixed(1)},${(h-pad).toFixed(1)} Z`;
+  return d;
+}
+
+/* ============ 过拟合切换 ============ */
+(function(){
+  const A={name:'区间A · 完美',prices:[23,30,38,45,52,60,68,75,80,85,90,92],end:85,avg:54,inv:11000,mv:19141.44,ret:74.01};
+  const B={name:'区间B · 阴跌',prices:[92,80,72,65,58,52,47,43,40,38,36,36],end:36,avg:51.7,inv:11000,mv:7659,ret:-30.4};
+  const seg=document.getElementById('overfitSeg');
+  let cur='good';
+  function draw(v){
+    const d=v==='good'?A:B;
+    const el=document.getElementById('overfitChart');
+    const W=1000,H=330,pad=52;
+    const pts=d.prices.map((p,i)=>[i/(d.prices.length-1), (p-Math.min(...d.prices)*.85)/(Math.max(...d.prices)*1.1-Math.min(...d.prices)*.85)]);
+    const col=v==='good'?'#34d399':'#fb7185';
+    const s=W/H;
+    el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">
+      ${axesSVG(W,H,['第1月','第3月','第5月','第7月','第9月','第11月'],'价格')}
+      <path d="${areaPath(pts,W,H,pad,col)}" fill="${col}" opacity="0.10"/>
+      <path d="${pathFrom(pts,W,H,pad)}" fill="none" stroke="${col}" stroke-width="3" stroke-linecap="round"/>
+      <line x1="50" y1="${H-40-( (d.end-Math.min(...d.prices)*.85)/(Math.max(...d.prices)*1.1-Math.min(...d.prices)*.85) )*(H-40-14)}" x2="${W-20}" y2="${H-40-( (d.end-Math.min(...d.prices)*.85)/(Math.max(...d.prices)*1.1-Math.min(...d.prices)*.85) )*(H-40-14)}" stroke="${col}" stroke-width="1.2" stroke-dasharray="5 5" opacity=".7"/>
+      <text x="${W-40}" y="${H-40-( (d.end-Math.min(...d.prices)*.85)/(Math.max(...d.prices)*1.1-Math.min(...d.prices)*.85) )*(H-40-14)-8}" fill="${col}" font-size="12" text-anchor="end" font-family="var(--mono)">期末 $${d.end}</text>
+    </svg>`;
+    document.getElementById('ov-price').textContent='$'+d.avg;
+    document.getElementById('ov-end').textContent='$'+d.end;
+    document.getElementById('ov-inv').textContent='$'+d.inv.toLocaleString();
+    const ret=document.getElementById('ov-ret');
+    ret.textContent=(d.ret>=0?'+':'')+d.ret+'%';
+    ret.style.color=d.ret>=0?'var(--green)':'var(--red)';
+  }
+  seg.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    seg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+    cur=b.dataset.v;draw(cur);
+  });
+  draw('good');
+})();
+
+/* ============ 定投模拟器 ============ */
+(function(){
+  const amt=document.getElementById('sAmt'),yr=document.getElementById('sYr'),rr=document.getElementById('sR'),dd=document.getElementById('sD');
+  const oA=document.getElementById('oAmt'),oY=document.getElementById('oYr'),oR=document.getElementById('oR'),oD=document.getElementById('oD');
+  const chart=document.getElementById('simChart');
+  function draw(){
+    const P=+amt.value, years=+yr.value, r=+rr.value, delay=+dd.value;
+    oA.textContent='¥'+P.toLocaleString();oY.textContent=years+' 年';oR.textContent=r+'%';oD.textContent=delay+' 年';
+    document.getElementById('simDLab').textContent='晚 '+delay+' 年开始';
+    const n=years*12, rm=Math.pow(1+r/100,1/12)-1;
+    // 曲线1: 现在就开始 —— 从第0个月起每月定投 P
+    let dcaV=0;const dcaPts=[[0,0]];
+    for(let m=1;m<=n;m++){dcaV=(dcaV+P)*Math.pow(1+rm,1);if(m%(Math.max(1,Math.round(n/24)))===0||m===n)dcaPts.push([m/n,dcaV]);}
+    dcaPts[dcaPts.length-1]=[1,dcaV];
+    // 曲线2: 晚 delay 年开始 —— 前 delay 年"攒着"(不增值),之后每月定投 P
+    const startMonth=Math.min(delay*12,n);
+    let lateV=0;const latePts=[[0,0]];
+    for(let m=1;m<=n;m++){
+      if(m>startMonth)lateV=(lateV+P)*Math.pow(1+rm,1);
+      if(m%(Math.max(1,Math.round(n/24)))===0||m===n)latePts.push([m/n,lateV]);
+    }
+    latePts[latePts.length-1]=[1,lateV];
+    const inv=P*n;
+    const W=1000,H=360,pad=52;
+    const mx=Math.max(dcaV,lateV,inv)*1.15;
+    const p1=dcaPts.map(([x,y])=>[x,y/mx]);
+    const p2=latePts.map(([x,y])=>[x,y/mx]);
+    const invLine=[[0,0],[1,inv/mx]];
+    chart.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">
+      ${axesSVG(W,H,['第0年','第'+Math.round(years/3)+'年','第'+Math.round(years*2/3)+'年','第'+years+'年'],'金额')}
+      <path d="${areaPath(p1,W,H,pad,'#f5c76a')}" fill="#f5c76a" opacity="0.10"/>
+      <path d="${pathFrom(p1,W,H,pad)}" fill="none" stroke="#f5c76a" stroke-width="3" stroke-linecap="round"/>
+      <path d="${pathFrom(p2,W,H,pad)}" fill="none" stroke="#55c8ff" stroke-width="2.4" stroke-dasharray="7 6" stroke-linecap="round"/>
+      <path d="${pathFrom(invLine,W,H,pad)}" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1.6" stroke-dasharray="3 5"/>
+      <text x="${W-20}" y="30" fill="#f5c76a" font-size="13" text-anchor="end" font-family="var(--font)">现在就开始 · ¥${Math.round(dcaV).toLocaleString()}</text>
+      <text x="${W-20}" y="50" fill="#55c8ff" font-size="13" text-anchor="end" font-family="var(--font)">晚 ${delay} 年开始 · ¥${Math.round(lateV).toLocaleString()}</text>
+      <text x="${W-20}" y="70" fill="rgba(255,255,255,.5)" font-size="12" text-anchor="end" font-family="var(--font)">累计投入 · ¥${Math.round(inv).toLocaleString()}</text>
+    </svg>`;
+    document.getElementById('simInv').textContent='¥'+inv.toLocaleString();
+    document.getElementById('simDca').textContent='¥'+Math.round(dcaV).toLocaleString();
+    document.getElementById('simLump').textContent='¥'+Math.round(lateV).toLocaleString();
+    const edge=document.getElementById('simEdge');
+    const e=dcaV-lateV;
+    edge.textContent = lateV>0 ? '¥'+Math.round(e).toLocaleString()+' ('+(e/lateV*100).toFixed(0)+'%)' : '¥'+Math.round(e).toLocaleString();
+    edge.style.color='var(--green)';
+  }
+  [amt,yr,rr,dd].forEach(el=>el.addEventListener('input',draw));
+  draw();
+})();
+
+/* ============ BOX 回测 ============ */
+(function(){
+  // 公开历史月线锚点(约价,±3%),2019-07 ~ 2024-12, 66 个月
+  const BTC=[10500,9600,8300,9200,7500,7200,9300,8600,6400,8600,9500,9100,
+    11300,11600,10800,13800,19700,29000,33100,45100,58800,57700,37300,35000,
+    41500,47100,43800,61300,57000,46300,38200,43200,45500,37700,31700,20000,
+    23400,20000,19400,20500,16300,16500,23100,23100,28100,29300,27200,30500,
+    29200,25900,27000,34600,37700,42200,42600,61300,71300,60700,67400,62700,
+    64600,58900,63400,70300,96500,93700];
+  const EOS=[6.0,5.5,4.5,3.6,3.0,2.6,4.2,3.8,2.0,2.4,2.5,2.5,
+    2.6,3.0,2.6,2.6,3.0,2.9,3.4,4.2,5.5,5.0,3.7,3.7,
+    3.7,4.6,4.5,4.7,4.5,3.6,3.2,3.2,3.3,3.0,2.2,1.3,
+    1.5,1.4,1.3,1.2,1.0,1.0,1.3,1.3,1.1,1.2,1.0,0.8,
+    0.7,0.6,0.6,0.9,0.8,1.0,1.0,1.3,1.3,1.2,1.1,0.9,
+    0.9,0.9,0.9,0.9,0.9,0.8];
+  const XIN=120.0, N=BTC.length;
+  function dcaSeries(w){ // returns {mvSeries:[[i,mv]], endMv, low41, contrib}
+    const sh={b:0,e:0,x:0};const series=[];
+    for(let i=0;i<N;i++){
+      sh.b+=1000*w.b/BTC[i];sh.e+=1000*w.e/EOS[i];sh.x+=1000*w.x/XIN;
+      const mv=sh.b*BTC[i]+sh.e*EOS[i]+sh.x*XIN;
+      if(i%3===0||i===N-1)series.push([i/(N-1),mv]);
+    }
+    // 41 months in (2022-11 FTX trough)
+    let sh41={b:0,e:0,x:0};
+    for(let i=0;i<41;i++){sh41.b+=1000*w.b/BTC[i];sh41.e+=1000*w.e/EOS[i];sh41.x+=1000*w.x/XIN;}
+    const mv41=sh41.b*BTC[40]+sh41.e*EOS[40]+sh41.x*XIN;
+    const endMv=sh.b*BTC[N-1]+sh.e*EOS[N-1]+sh.x*XIN;
+    const contrib={b:sh.b*BTC[N-1],e:sh.e*EOS[N-1],x:sh.x*XIN};
+    return {series,endMv,low41:mv41,contrib};
+  }
+  const SCEN={
+    box:{w:{b:.65,e:.25,x:.10},label:'官方 BOX 65/25/10',col:'#f5c76a'},
+    btc:{w:{b:1,e:0,x:0},label:'全 BTC',col:'#55c8ff'},
+    eos:{w:{b:0,e:1,x:0},label:'全 EOS',col:'#fb7185'}
+  };
+  const seg=document.getElementById('boxSeg');
+  function draw(v){
+    const S=SCEN[v],r=dcaSeries(S.w);
+    const W=1000,H=340,pad=52;
+    const mx=Math.max(...r.series.map(p=>p[1]))*1.15;
+    const pts=r.series.map(([x,y])=>[x,y/mx]);
+    const years=['2019-07','2020-06','2021-07','2022-11','2023-12','2024-12'];
+    const chart=document.getElementById('boxChart');
+    chart.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">
+      ${axesSVG(W,H,years,'市值')}
+      <path d="${areaPath(pts,W,H,pad,S.col)}" fill="${S.col}" opacity="0.10"/>
+      <path d="${pathFrom(pts,W,H,pad)}" fill="none" stroke="${S.col}" stroke-width="3" stroke-linecap="round"/>
+      <text x="${W-20}" y="30" fill="${S.col}" font-size="13" text-anchor="end" font-family="var(--font)">${S.label}</text>
+      <text x="${W-20}" y="50" fill="rgba(255,255,255,.5)" font-size="12" text-anchor="end" font-family="var(--font)">期末市值 $${Math.round(r.endMv).toLocaleString()}</text>
+    </svg>`;
+    document.getElementById('bx-mv').textContent='$'+Math.round(r.endMv).toLocaleString();
+    const ret=document.getElementById('bx-ret');
+    const rr=(r.endMv/66000-1)*100;
+    ret.textContent=(rr>=0?'+':'')+rr.toFixed(1)+'%';
+    ret.style.color=rr>=0?'var(--green)':'var(--red)';
+    const lr=(r.low41/41000-1)*100;
+    const low=document.getElementById('bx-low');
+    low.textContent=(lr>=0?'+':'')+lr.toFixed(1)+'%';
+    low.style.color=lr>=0?'var(--green)':'var(--cyan)';
+    // contribution bars
+    const c=r.contrib,tot=Object.values(c).reduce((a,b)=>a+b,0);
+    const names=[['b','BTC',S.col],['e','EOS','#fb7185'],['x','XIN','#a78bfa']];
+    let h='<div style="font-size:12px;color:var(--ink-faint);margin-bottom:8px">期末市值贡献分解(BTC 一个人扛起了大部分收益)</div>';
+    names.forEach(([k,nm,col])=>{
+      const pct=c[k]/tot*100;
+      h+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+        <span style="width:44px;font-size:12.5px;color:var(--ink-dim)">${nm}</span>
+        <div style="flex:1;height:15px;background:rgba(255,255,255,.06);border-radius:8px;overflow:hidden">
+          <div style="width:${pct.toFixed(1)}%;height:100%;background:${col};opacity:.85"></div>
+        </div>
+        <span style="width:76px;text-align:right;font-family:var(--mono);font-size:12.5px;color:var(--ink)">${pct.toFixed(1)}%</span>
+      </div>`;
+    });
+    document.getElementById('boxContrib').innerHTML=h;
+  }
+  seg.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    seg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+    draw(b.dataset.v);
+  });
+  draw('box');
+})();
+
+/* ============ 比特币发行曲线 ============ */
+(function(){
+  const chart=document.getElementById('btcChart');
+  const W=1000,H=360,pad=52;
+  // cumulative supply curve: y = 21M*(1-2^(-t/4)) where t in years from 2009; x from 2009..2140
+  const years=131,x0=2009;
+  const pts=[];
+  for(let i=0;i<=240;i++){const t=i*131/240;const supp=21000000*(1-Math.pow(2,-t/4));pts.push([t/131,supp/21000000]);}
+  const marks=[[2012,0.5,'2012 · 已挖 50%'],[2035,.99,'~2035 · 99%'],[2140,1,'2140 · 100%']];
+  const sy=v=>H-pad-v*(H-2*pad);
+  const sx=v=>pad+v*(W-2*pad);
+  html=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">
+    <line x1="${sx(0)}" y1="${sy(1)}" x2="${sx(1)}" y2="${sy(1)}" stroke="rgba(255,255,255,.18)" stroke-dasharray="6 5"/>
+    <text x="${sx(1)+6}" y="${sy(1)+4}" fill="rgba(255,255,255,.5)" font-size="11.5" font-family="var(--font)">2100万枚上限</text>`;
+  for(let i=0;i<5;i++){const y=14+(H-40-14)*i/4;html+=`<line x1="50" y1="${y.toFixed(0)}" x2="${W-20}" y2="${y.toFixed(0)}" stroke="rgba(255,255,255,.05)"/>`;}
+  html+=`<line x1="50" y1="${H-40}" x2="${W-20}" y2="${H-40}" stroke="rgba(255,255,255,.15)"/>`;
+  html+=`<line x1="50" y1="14" x2="50" y2="${H-40}" stroke="rgba(255,255,255,.15)"/>`;
+  ['2009','2020','2035','2080','2120','2140'].forEach((t,i)=>{const x=50+(W-20-50)*i/5;html+=`<text x="${x.toFixed(0)}" y="${H-18}" fill="rgba(255,255,255,.45)" font-size="11" text-anchor="middle" font-family="var(--mono)">${t}</text>`;});
+  let d=`M${sx(0).toFixed(1)},${sy(pts[0][1]).toFixed(1)}`;
+  for(let i=1;i<pts.length;i++)d+=` L${sx(pts[i][0]).toFixed(1)},${sy(pts[i][1]).toFixed(1)}`;
+  html+=`<path d="${d}" fill="none" stroke="#f5c76a" stroke-width="3" stroke-linecap="round"/>`;
+  html+=`<path d="${d} L${sx(1).toFixed(1)},${sy(0).toFixed(1)} L${sx(0).toFixed(1)},${sy(0).toFixed(1)} Z" fill="#f5c76a" opacity="0.08"/>`;
+  marks.forEach(([y,pct,lab])=>{
+    const x=sx((y-x0)/131),yy=sy(pct);
+    html+=`<circle cx="${x.toFixed(1)}" cy="${yy.toFixed(1)}" r="4.5" fill="#55c8ff"/>
+      <text x="${x.toFixed(1)}" y="${(yy-10).toFixed(1)}" fill="#55c8ff" font-size="12" text-anchor="middle" font-family="var(--font)">${lab}</text>`;
+  });
+  html+='</svg>';
+  chart.innerHTML=html;
+})();
+
+/* ============ 数字统计(hero 静态已是文本,跳过动画) ============ */
+</script>
+</body>
+</html>
